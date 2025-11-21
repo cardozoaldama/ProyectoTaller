@@ -9,51 +9,61 @@ Este proyecto es una aplicación Django para la gestión de un taller mecánico,
   - MariaDB/MySQL: servicio corriendo y librerías nativas para `mysqlclient`
 
 ## Entorno virtual e instalación
+
+### Instalación rápida (SQLite - Recomendado para desarrollo)
 ```bash
 # Crear y activar entorno virtual
 python -m venv .venv
-source .venv/bin/activate  # Windows: .venv\\Scripts\\activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 
 # Actualizar pip
 python -m pip install -U pip
 
-# Instalar dependencias mínimas para usar SQLite (sin MySQL/MariaDB)
-pip install -r requirements2.txt
+# Instalar dependencias base (incluye SQLite)
+pip install -r requirements.txt
 ```
 
-## Configuración de base de datos
-El repositorio trae configurado MySQL/MariaDB en `taller_mecanico/settings.py`.
-Para evitar dependencias nativas, puedes optar por una de las siguientes opciones:
+### Instalación con MySQL/MariaDB (Opcional)
 
-### Opción A: Usar SQLite (recomendado para evaluación/desarrollo)
-1. Edita `taller_mecanico/settings.py` y reemplaza la sección `DATABASES` por:
-```python
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
-}
-```
-2. Guarda los cambios y continúa con migraciones y servidor.
+Si necesitas usar MySQL/MariaDB en lugar de SQLite:
 
-### Opción B: Usar MariaDB/MySQL
-1. Instalar librerías del sistema (ejemplo Debian/Ubuntu):
+#### 1. Instalar librerías del sistema
+
+**Debian/Ubuntu:**
 ```bash
-sudo apt-get update && sudo apt-get install -y default-libmysqlclient-dev build-essential
+sudo apt-get update && sudo apt-get install -y libmariadb-dev pkg-config
 ```
-2. Instalar cliente Python:
+
+**Fedora/RHEL:**
 ```bash
-pip install "mysqlclient>=2.2,<3"
+sudo dnf install mariadb-devel
 ```
-3. Asegúrate de que `DATABASES` en `taller_mecanico/settings.py` contenga tus credenciales:
+
+**Arch Linux/CachyOS:**
+```bash
+sudo pacman -S mariadb-libs pkg-config
+```
+
+**macOS:**
+```bash
+brew install mysql-client pkg-config
+```
+
+#### 2. Instalar dependencias opcionales
+```bash
+pip install -r requirements-optional.txt
+```
+
+#### 3. Configurar base de datos
+
+Edita `taller_mecanico/settings.py` y reemplaza la sección `DATABASES`:
 ```python
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
         'NAME': 'taller_mecanico',
-        'USER': 'usuario',
-        'PASSWORD': 'password',
+        'USER': 'tu_usuario',
+        'PASSWORD': 'tu_password',
         'HOST': 'localhost',
         'PORT': '3306',
         'OPTIONS': {
@@ -63,12 +73,64 @@ DATABASES = {
 }
 ```
 
+## Configuración de base de datos
+
+El proyecto viene configurado por defecto con **SQLite** (ideal para desarrollo):
+```python
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
+}
+```
+
+No requiere configuración adicional ni servicios externos.
+
 ## Migraciones y ejecución
+
+### 1. Aplicar migraciones
 ```bash
+cd taller_mecanico
 python manage.py migrate
+```
+
+### 2. Crear usuarios de prueba (Recomendado)
+
+Para poder iniciar sesión en el sistema, necesitas crear usuarios. Puedes hacerlo de dos formas:
+
+**Opción A: Usuarios de prueba automáticos** (Recomendado para desarrollo)
+```bash
+python manage.py setup_test_users
+```
+
+Esto creará automáticamente:
+- **Jefe**: `jefe` / `jefe123` (Acceso completo al sistema)
+- **Encargado**: `encargado` / `encargado123` (Gestión operacional)
+- **Mecánico**: `mecanico` / `mecanico123` (Vista de reparaciones)
+
+Si los usuarios ya existen y quieres recrearlos:
+```bash
+python manage.py setup_test_users --reset
+```
+
+**Opción B: Crear usuarios personalizados**
+```bash
+# Crear un jefe
+python manage.py crear_usuario jefe password123 --puesto jefe --nombre "Roberto" --email jefe@taller.com
+
+# Crear un mecánico
+python manage.py crear_usuario juan pass456 --puesto mecanico --nombre "Juan" --telefono "0981-123-456"
+```
+
+### 3. Ejecutar el servidor
+```bash
 python manage.py runserver
 ```
+
 - Accede a la app en http://127.0.0.1:8000/
+- Página de login: http://127.0.0.1:8000/login/
+- Panel admin de Django: http://127.0.0.1:8000/admin/
 - Endpoints API bajo el prefijo definido en `taller_mecanico/urls.py` (por defecto `api/`).
 
 ## Consideraciones adicionales
